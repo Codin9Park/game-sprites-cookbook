@@ -35,20 +35,29 @@ ffmpeg -version
 magick -version
 ```
 
-## 1) File organization
-
-Create one working folder per character:
+## 1) Repository layout
 
 ```
-character_name/
-├── sources/            # original images (front/back/left/right)
-├── videos/             # AI generated videos
-├── frames/             # extracted frames (raw)
-├── frames_resized/     # resized frames
-├── frames_clean/       # frames with background removed (if needed)
-├── frames_selected/    # final selected frames (before spritesheet)
-└── spritesheets/       # final spritesheets
+.
+├── assets/
+├── examples/
+│   └── chipset/
+│       ├── 01_sources/
+│       ├── 02_ai_videos/
+│       ├── 03_frames_raw/
+│       ├── 04_frames_resized/
+│       ├── 05_frames_clean/
+│       ├── 06_frames_selected/
+│       ├── 07_spritesheets/
+│       ├── README.md
+│       └── README_fr.md
+├── tools/
+├── INSTALL.md
+├── README.md
+└── README_fr.md
 ```
+
+If you create a new character, follow the same numbered folder structure as `examples/chipset`.
 
 ## 2) AI step: generate a usable video for a spritesheet
 

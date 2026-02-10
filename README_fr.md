@@ -35,20 +35,29 @@ ffmpeg -version
 magick -version
 ```
 
-## 1) Organisation des fichiers
-
-Créer un dossier de travail par personnage :
+## 1) Structure du dépôt
 
 ```
-character_name/
-├── sources/            # images originales (front/back/left/right)
-├── videos/             # vidéos générées par IA
-├── frames/             # frames extraites (brutes)
-├── frames_resized/     # frames redimensionnées
-├── frames_clean/       # frames avec background supprimé (si besoin)
-├── frames_selected/    # frames finales choisies (avant spritesheet)
-└── spritesheets/       # spritesheets finaux
+.
+├── assets/
+├── examples/
+│   └── chipset/
+│       ├── 01_sources/
+│       ├── 02_ai_videos/
+│       ├── 03_frames_raw/
+│       ├── 04_frames_resized/
+│       ├── 05_frames_clean/
+│       ├── 06_frames_selected/
+│       ├── 07_spritesheets/
+│       ├── README.md
+│       └── README_fr.md
+├── tools/
+├── INSTALL.md
+├── README.md
+└── README_fr.md
 ```
+
+Si tu crées un nouveau personnage, suis la même structure numérotée que `examples/chipset`.
 
 ## 2) Étape IA : générer une vidéo utilisable pour un spritesheet
 
