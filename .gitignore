@@ -1,0 +1,9 @@
+.DS_Store
+*.mp4
+*.mov
+frames/
+frames_raw/
+frames_resized/
+frames_clean/
+__pycache__/
+.env
