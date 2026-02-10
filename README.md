@@ -1,41 +1,41 @@
-# Cookbook - Create Your Animated Character (AI video -> frames -> spritesheet)
+# Cookbook — Créer son personnage animé (vidéo IA → frames → spritesheet)
 
-This guide explains an end-to-end method to create a spritesheet from:
-1) images of a character (front / back / left / right)
-2) an AI-generated video (DemoAI / DomoAI)
-3) a post-process pipeline (FFmpeg + ImageMagick + optional tools)
-4) selection/preview in TexturePacker Free
-5) a final export (spritesheet + preview)
+Ce guide explique une méthode **de bout en bout** pour créer un spritesheet à partir :
+1) d’images d’un personnage (front / back / left / right)  
+2) d’une vidéo générée par IA (DemoAI / DomoAI)  
+3) d’un pipeline de post-process (FFmpeg + ImageMagick + outils optionnels)  
+4) d’une sélection/visualisation dans **TexturePacker Free**  
+5) d’un export final (spritesheet + aperçu)
 
-> Goal: a student can apply the recipe step by step to integrate animations into a game.
+> Objectif : qu’un élève puisse **appliquer la recette** étape par étape pour intégrer ses animations dans un jeu.
 
 ---
 
-## 0) Prerequisites
+## 0) Pré-requis
 
-### Tools to install
-- FFmpeg
-- ImageMagick (commands: `magick`, `mogrify`, `montage`)
-- TexturePacker Free (to preview / choose frames / export)
-- An image editor (your choice):
-  - recommended: Photopea (web) or GIMP (local)
+### Outils à installer
+- **FFmpeg**
+- **ImageMagick** (commande `magick`, `mogrify`, `montage`)
+- **TexturePacker Free** (pour visualiser / choisir les frames / exporter)
+- Un éditeur d’image (au choix) :
+  - conseillé : **Photopea** (web) ou **GIMP** (local)
 
-### Install (macOS)
+### Installation (macOS)
 ```bash
 brew install ffmpeg imagemagick
 ```
 
-### Install (Windows)
-- FFmpeg: install + add to PATH (or use "winget" if available)
-- ImageMagick: install the version that includes magick.exe
+### Installation (Windows)
+	•	FFmpeg : installer + ajouter au PATH (ou utiliser “winget” si dispo)
+	•	ImageMagick : installer la version qui inclut magick.exe
 
-### Verify installation
+### Vérifier l’installation
 ```bash
 ffmpeg -version
 magick -version
 ```
 
-## 1) Repository layout
+## 1) Structure du dépôt
 
 ```
 .
@@ -57,20 +57,20 @@ magick -version
 └── README_fr.md
 ```
 
-If you create a new character, follow the same numbered folder structure as `examples/chipset`.
+Si tu crées un nouveau personnage, suis la même structure numérotée que `examples/chipset`.
 
-## 2) AI step: generate a usable video for a spritesheet
+## 2) Étape IA : générer une vidéo utilisable pour un spritesheet
 
-### 2.1 Important tips (to avoid unusable videos)
+### 2.1 Conseils importants (pour éviter les vidéos “inexploitables”)
 
-- The character must stay the same size (no camera push / no zoom).
-- Movement should be "in place": walk/run is a loop, not moving across the scene.
-- Style: cartoon / consistent with the source image.
-- No shape changes: keep proportions, volumes, colors, shading.
+	•	Le personnage doit rester à taille constante (pas d’approche caméra / pas de zoom).
+	•	Mouvement “sur place” : walk/run doit être un cycle, pas un déplacement dans le décor.
+	•	Style : cartoon / cohérent avec l’image source.
+	•	Pas de morphologie qui change : garder proportions, volumes, couleurs, shading.
 
-### 2.2 Base prompts (examples)
+### 2.2 Prompts de base (exemples)
 
-Walk cycle (in place)
+Walk cycle (sur place)
 
  Animate this character doing a looping walk cycle in place.
  Keep the exact same body proportions, size, camera angle and lighting.
@@ -78,7 +78,7 @@ Walk cycle (in place)
  The character stays centered, feet animate naturally like a game walk loop.
  Cartoon style, smooth but simple, loopable motion.
 
-Idle (light breathing)
+Idle (respiration légère)
 
  Animate this character in an idle loop.
  No walking, no talking. Only subtle breathing (tiny up/down), occasional eye blink.
@@ -86,102 +86,102 @@ Idle (light breathing)
 
 Action (throw / punch / jump)
 
- Animate a short action that can loop cleanly (start -> action -> return to idle pose).
+ Animate a short action that can loop cleanly (start → action → return to idle pose).
  Keep constant size and camera distance; never move toward the camera.
  Cartoon style, no deformation of the character design.
 
 
-### 2.3 Video export
+### 2.3 Export vidéo
 
-- Download the video as MP4 (if possible without watermark)
-- Put the file in videos/:
-  - walk_front.mp4, walk_back.mp4, idle_right.mp4, etc.
+	•	Télécharger la vidéo en MP4 (si possible sans watermark)
+	•	Mettre le fichier dans videos/ :
+	    •	walk_front.mp4, walk_back.mp4, idle_right.mp4, etc.
 
 
-## 3) Extract frames from a video (FFmpeg)
+## 3) Extraire les frames d’une vidéo (FFmpeg)
 
-### 3.1 Extract at constant FPS (recommended)
+### 3.1 Extraction à FPS constant (recommandé)
 
-Example: 12 frames/second
+Exemple : 12 images/seconde
 
 ```bash
 mkdir -p frames
 ffmpeg -i videos/walk_front.mp4 -vf "fps=12" frames/walk_front_%04d.png
 ```
 
-> Tip: 8-12 fps is often enough for "video game" spritesheets.
+> Astuce : 8–12 fps est souvent suffisant pour des spritesheets “jeu vidéo”.
 
-### 3.2 Reduce the number of frames (1 of 2, 1 of 3)
+### 3.2 Réduire le nombre de frames (1 sur 2, 1 sur 3)
 
-1 out of 2 frames
+1 frame sur 2
 
 ```bash
 mkdir -p frames
 ffmpeg -i videos/walk_front.mp4 -vf "select=not(mod(n\,2))" -vsync vfr frames/walk_front_%04d.png
 ```
 
-## 4) Resize frames (ImageMagick)
+## 4) Redimensionner les frames (ImageMagick)
 
-### 4.1 Resize by percentage (keeps ratio)
+### 4.1 Redimensionner en pourcentage (garde le ratio)
 
 ```bash
 mkdir -p frames_resized
 mogrify -path frames_resized -resize 85% frames/walk_front_*.png
 ```
 
-### 4.2 Resize to a fixed size (forces ratio)
+### 4.2 Redimensionner à une taille fixe (force le ratio)
 
-If you want a target height (ex: 240 px tall) and accept forcing:
+Si tu veux une hauteur cible (ex : 240 px de haut) et tu acceptes de forcer :
 
 ```bash
 mkdir -p frames_resized
 mogrify -path frames_resized -resize x240 frames/walk_front_*.png
 ```
 
-> -resize x240 = fixes height to 240, width adjusts automatically.
+> -resize x240 = fixe la hauteur à 240, largeur ajustée automatiquement.
 
 
-## 5) Remove background (if needed)
+## 5) Supprimer le background (si nécessaire)
 
-> Important: many AI videos export without alpha (white/black background).
+> ⚠️ Important : beaucoup de vidéos IA sont exportées sans alpha (fond blanc/noir).
 
-In that case, you need to cut out the background:
-- either with an AI tool (remove.bg, etc.)
-- or with ImageMagick when the background is almost uniform (beware of halos)
+Dans ce cas, il faut “détourer” :
+	•	soit avec un outil IA (remove.bg, etc.)
+	•	soit avec ImageMagick quand le fond est quasi uniforme (mais attention aux halos)
 
-### 5.1 White background -> transparent (with fuzz)
+### 5.1 Fond blanc → transparent (avec fuzz)
 
 ```bash
 mkdir -p frames_clean
 mogrify -path frames_clean -fuzz 10% -transparent white frames_resized/walk_front_*.png
 ```
 
-### 5.2 Reduce a halo (optional)
+### 5.2 Réduire un halo (optionnel)
 
 ```bash
 mkdir -p frames_clean
 mogrify -path frames_clean -fuzz 10% -transparent white -morphology Erode Disk:1 frames_resized/walk_front_*.png
 ```
 
-> Use only if edges keep a white outline.
+> À utiliser seulement si les bords gardent un liseré blanc.
 
-## 6) Flip an animation (Left -> Right)
+## 6) Flipper une animation (Left → Right)
 
-### 6.1 Flip all frames
+### 6.1 Flipper toutes les frames
 
 ```bash
 mkdir -p frames_flipped
 mogrify -path frames_flipped -flop frames_clean/walk_left_*.png
 ```
 
-> -flop = horizontal mirror (left <-> right)
+> -flop = miroir horizontal (gauche ↔ droite)
 
 
-## 7) Create a spritesheet (ImageMagick) - assembly
+## 7) Créer un spritesheet (ImageMagick) — assemblage
 
-### 7.1 Assemble an NxM grid
+### 7.1 Assembler une grille NxM
 
-Example: 4 columns x 3 rows
+Exemple : 4 colonnes × 3 lignes
 
 ```bash
 mkdir -p spritesheets
@@ -191,29 +191,29 @@ magick montage frames_selected/*.png \
   spritesheets/walk_front.png
 ```
 
-> -background none prevents a white background from reappearing during assembly.
+> -background none évite le retour d’un fond blanc lors de l’assemblage.
 
 
-## 8) TexturePacker Free: select & export cleanly
+## 8) TexturePacker Free : sélectionner & exporter proprement
 
-### 8.1 Why TexturePacker
-- Preview the animation
-- Remove ugly frames
-- Check the loop
-- Stable final export
+### 8.1 Pourquoi TexturePacker
+	•	Visualiser l’animation (preview)
+	•	Supprimer les frames “moches”
+	•	Vérifier la boucle
+	•	Export final stable
 
-### 8.2 Recommended workflow
-1. Import images (frames_clean or frames_resized)
-2. Preview animation
-3. Keep only useful frames (ex: 8-12)
-4. Export as spritesheet (grid or pack) depending on the engine
+### 8.2 Workflow recommandé
+	1.	Importer les images (frames_clean ou frames_resized)
+	2.	Preview animation
+	3.	Garder seulement les frames utiles (ex : 8–12)
+	4.	Exporter en spritesheet (grid / ou pack) selon le besoin du moteur
 
-> For Golden Quest / Pygame: prefer a regular grid.
+> Pour Golden Quest / Pygame : privilégier une grille régulière.
 
 
-## 9) Copy-paste recipes
+## 9) Recettes prêtes à copier-coller
 
-### 9.1 Video -> frames -> resize -> spritesheet (no remove bg)
+### 9.1 Vidéo → frames → resize → spritesheet (sans remove bg)
 
 ```bash
 mkdir -p frames frames_resized frames_selected spritesheets
@@ -221,11 +221,11 @@ mkdir -p frames frames_resized frames_selected spritesheets
 ffmpeg -i videos/idle_right.mp4 -vf "fps=12" frames/idle_right_%04d.png
 mogrify -path frames_resized -resize x240 frames/idle_right_*.png
 
-# (manual selection) copy a few frames into frames_selected/
+# (sélection manuelle) copier quelques frames dans frames_selected/
 magick montage frames_selected/*.png -background none -alpha set -tile 4x3 -geometry +0+0 spritesheets/idle_right.png
 ```
 
-### 9.2 Video -> frames -> resize -> remove bg -> spritesheet
+### 9.2 Vidéo → frames → resize → remove bg → spritesheet
 
 ```bash
 mkdir -p frames frames_resized frames_clean frames_selected spritesheets
@@ -234,13 +234,13 @@ ffmpeg -i videos/walk_front.mp4 -vf "fps=12" frames/walk_front_%04d.png
 mogrify -path frames_resized -resize x240 frames/walk_front_*.png
 mogrify -path frames_clean -fuzz 10% -transparent white frames_resized/walk_front_*.png
 
-# (selection) frames_clean -> frames_selected
+# (sélection) frames_clean → frames_selected
 magick montage frames_selected/*.png -background none -alpha set -tile 4x3 -geometry +0+0 spritesheets/walk_front.png
 ```
 
-### 9.3 Spritesheet -> explode -> flip -> reassemble
+### 9.3 Spritesheet → explode → flip → reassemble
 
-Example (frames 118x210, grid 4x3)
+Exemple (frames 118×210, grille 4×3)
 
 ```bash
 mkdir -p tmp_left tmp_right spritesheets
@@ -251,43 +251,43 @@ mogrify -path tmp_right -flop tmp_left/*.png
 magick montage tmp_right/*.png -background none -alpha set -tile 4x3 -geometry +0+0 spritesheets/output_right.png
 ```
 
-## 10) Common problems & solutions
+## 10) Problèmes fréquents & solutions
 
-### A) The character gets bigger / moves toward the camera
+### A) Le perso grossit / avance vers la caméra
 
--> Strengthen the prompt:
-- "in place"
-- "no camera movement"
-- "constant size"
-- "do not move toward the camera"
+→ Prompt à renforcer :
+	•	“in place”
+	•	“no camera movement”
+	•	“constant size”
+	•	“do not move toward the camera”
 
-### B) White background returns during assembly
+### B) Fond blanc qui revient lors de l’assemblage
 
--> Add:
-- -background none -alpha set in montage
+→ Ajouter :
+	•	-background none -alpha set dans montage
 
-### C) White halo around the character after remove bg
-- lower or adjust -fuzz (ex: 6-12%)
-- try -morphology Erode Disk:1 (carefully)
+### C) Halo blanc autour du personnage après remove bg
+	•	baisser ou ajuster -fuzz (ex : 6–12%)
+	•	essayer -morphology Erode Disk:1 (avec prudence)
 
-### D) Frames do not all have identical dimensions
+### D) Les frames ne sont pas toutes identiques en dimensions
 
--> Normalize:
+→ Normaliser :
 
 ```bash
 mogrify -path frames_resized -resize x240 -extent 240x240 -gravity center frames/*.png
 ```
-(Use if you must force a common canvas)
+(à utiliser si tu dois forcer un canevas commun)
 
 
-## 11) Recommended naming (to avoid getting lost)
+## 11) Naming recommandé (pour ne pas se perdre)
 
-- idle_front.png, idle_back.png, idle_left.png, idle_right.png
-- walk_front.png, walk_back.png, walk_left.png, walk_right.png
-- throw_left.png, throw_right.png
-- etc.
+	•	idle_front.png, idle_back.png, idle_left.png, idle_right.png
+	•	walk_front.png, walk_back.png, walk_left.png, walk_right.png
+	•	throw_left.png, throw_right.png
+	•	etc.
 
-## Appendices (coming soon)
-- Video tutorial (step by step)
-- "before integrating into the game" checklist
-- Prompt templates per animation (idle / walk / talk / throw / hit / die)
+## Annexes (à venir)
+	•	Tutoriel vidéo (pas à pas)
+	•	Check-list “avant intégration dans le jeu”
+	•	Templates de prompts par animation (idle / walk / talk / throw / hit / die)
